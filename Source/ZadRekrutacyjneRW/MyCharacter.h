@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "MyCharacter.generated.h"
 
+class USpringArmComponent;
+class UCameraComponent;
+
 UCLASS()
 class ZADREKRUTACYJNERW_API AMyCharacter : public ACharacter
 {
@@ -15,13 +18,27 @@ public:
 	// Sets default values for this character's properties
 	AMyCharacter();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+		USpringArmComponent* SpringArmComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+		UCameraComponent* CameraComponent;
+
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+
+	// Zadanie 1
+	void MoveForward(float Value);
+	void MoveRight(float Value);
+	void TurnAtRate(float Value);
+	void LookUpRate(float Value);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+	float BaseTurnRate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+	float BaseLookUpRate;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
