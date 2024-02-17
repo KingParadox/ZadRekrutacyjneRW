@@ -6,31 +6,42 @@
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
-// Sets default values
+/////////////////////////////////////// Constructor
 AMyCharacter::AMyCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArmComponent->SetupAttachment(RootComponent);
+	SpringArmComponent->bUsePawnControlRotation = true;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
 	CameraComponent->SetupAttachment(SpringArmComponent);
+	CameraComponent->bUsePawnControlRotation = false;
 
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
 
-	BaseTurnRate = 45.0f;
-	BaseLookUpRate = 45.0f;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+
+	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Box"));
+	InteractionBox->SetupAttachment(RootComponent);
 
 }
 
-
-//Zadanie 1
+/////////////////////////////////////// Begin Play
+void AMyCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+}
 
 void AMyCharacter::MoveForward(float Value)
 {
-	if ((Controller) && (Value != 0.0f))
+	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -42,7 +53,7 @@ void AMyCharacter::MoveForward(float Value)
 
 void AMyCharacter::MoveRight(float Value)
 {
-	if ((Controller) && (Value != 0.0f))
+	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -52,33 +63,71 @@ void AMyCharacter::MoveRight(float Value)
 	}
 }
 
-void AMyCharacter::TurnAtRate(float Value)
-{
-	AddControllerYawInput(Value * BaseTurnRate * GetWorld()->GetDeltaSeconds());
-}
 
-void AMyCharacter::LookUpRate(float Value)
-{
-	AddControllerPitchInput(Value * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
-}
-
-// Called to bind functionality to input
+/////////////////////////////////////// Player Input
 void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	//Action mapping
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AMyCharacter::OnInteract);
 
-	//Axis mapping
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMyCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMyCharacter::MoveRight);
 
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("TurnRate", this, &AMyCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUpRate", this, &AMyCharacter::LookUpRate);
 
 }
 
+/////////////////////////////////////// Tick
+void AMyCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	TArray<AActor*>OverlappingActors;
+
+	InteractionBox->GetOverlappingActors(OverlappingActors);
+
+	if (OverlappingActors.Num() == 0)
+	{
+		if (Interface)
+		{
+			Interface->HideInteractionWidget();
+			Interface = nullptr;
+		}
+		return;
+	}
+	AActor* ClosestActor = OverlappingActors[0];
+
+	for (auto CurrentActor : OverlappingActors) 
+	{
+		if (GetDistanceTo(CurrentActor) < GetDistanceTo(ClosestActor))
+		{
+			ClosestActor = CurrentActor;
+		}
+
+	}
+
+	if (Interface)
+	{
+		Interface->HideInteractionWidget();
+	}
+	Interface = Cast<IInteractInterface>(ClosestActor);
+
+	if (Interface)
+	{
+		Interface->ShowInteractionWidget();
+	}
+
+}
+
+/////////////////////////////////////// On Interact
+void AMyCharacter::OnInteract()
+{
+	if (Interface)
+	{
+		Interface->Interact();
+	}
+}

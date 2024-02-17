@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/BoxComponent.h"
+#include "InteractInterface.h"
 #include "GameFramework/Character.h"
 #include "MyCharacter.generated.h"
 
@@ -10,12 +12,11 @@ class USpringArmComponent;
 class UCameraComponent;
 
 UCLASS()
-class ZADREKRUTACYJNERW_API AMyCharacter : public ACharacter
+class ZADREKRUTACYJNERW_API AMyCharacter : public ACharacter, public IInteractInterface
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AMyCharacter();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -26,21 +27,24 @@ public:
 
 protected:
 
-	// Zadanie 1
+	virtual void BeginPlay() override;
+
 	void MoveForward(float Value);
 	void MoveRight(float Value);
-	void TurnAtRate(float Value);
-	void LookUpRate(float Value);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
-	float BaseTurnRate;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
-	float BaseLookUpRate;
 
 public:	
 
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void Tick(float DeltaSeconds) override;
 
+
+
+private: 
+	UPROPERTY(EditAnywhere)
+		UBoxComponent* InteractionBox;
+
+	IInteractInterface* Interface;
+
+	void OnInteract();
 };
