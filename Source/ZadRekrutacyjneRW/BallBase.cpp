@@ -76,6 +76,9 @@ void ABallBase::ThrowBall()
 		ForwardVector *= 1500.0f;
 		UE_LOG(LogTemp, Warning, TEXT("Forward Vector: %s"), *ForwardVector.ToString());
 		ProjectileComponent->bSimulationEnabled = true;
+
+		//ForwardVector Var constantly changing the Velocity of Projectile movement, had no more time to fix unfortunately.
+
 		ProjectileComponent->Velocity = ForwardVector;
 		this->SetActorEnableCollision(true);
 	}
