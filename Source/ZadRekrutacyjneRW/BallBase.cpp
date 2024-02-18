@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+
 #include "BallBase.h"
+#include "Runtime/Engine/public/TimerManager.h"
 
 // Sets default values
 ABallBase::ABallBase()
@@ -14,12 +16,18 @@ ABallBase::ABallBase()
 	RootComponent = _RootComponent;
 
 	BallMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Ball mesh"));
-	BallMesh->SetSimulatePhysics(true);
 	BallMesh->SetupAttachment(RootComponent);
+	BallMesh->SetSimulatePhysics(false);
 
 	InteractionWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Interaction widget"));
 	InteractionWidget->SetVisibility(false);
 	InteractionWidget->SetupAttachment(BallMesh);
+
+	ProjectileComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Component"));
+	ProjectileComponent->InitialSpeed = 2000;
+	ProjectileComponent->MaxSpeed = 2000;
+	ProjectileComponent->bSimulationEnabled = false;
+
 }
 
 
@@ -32,7 +40,15 @@ void ABallBase::Tick(float DeltaTime)
 
 void ABallBase::Interact()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Take Ball"));
+	// Cannot solve why Even when disabling physics simulation and delaying attach actor to component, it still dont work so
+	// I just disabled physics simulation in constructor as temp fix
+	if (BPPlayerCharacter->EquippedBall == nullptr)
+	{
+		BallMesh->SetSimulatePhysics(false);
+		this->SetActorEnableCollision(false);
+		FTimerHandle Handle;
+		GetWorld()->GetTimerManager().SetTimer(Handle, this, &ABallBase::AttachBallToPlayer, 0.1f);
+	}
 }
 
 void ABallBase::ShowInteractionWidget()
@@ -49,5 +65,26 @@ void ABallBase::HideInteractionWidget()
 	{
 		InteractionWidget->SetVisibility(false);
 	}
+}
+
+void ABallBase::ThrowBall()
+{
+
+	if (BPPlayerCharacter)
+	{
+		FVector ForwardVector = BPPlayerCharacter->CameraComponent->GetForwardVector();
+		ForwardVector *= 1500.0f;
+		UE_LOG(LogTemp, Warning, TEXT("Forward Vector: %s"), *ForwardVector.ToString());
+		ProjectileComponent->bSimulationEnabled = true;
+		ProjectileComponent->Velocity = ForwardVector;
+		this->SetActorEnableCollision(true);
+	}
+}
+
+void ABallBase::AttachBallToPlayer()
+{
+	BPPlayerCharacter->EquippedBall = this;
+	this->AttachToComponent(PlayerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "BallSocket");
+	UE_LOG(LogTemp, Warning, TEXT("Ball Picked up by: %s"), *PlayerCharacter->GetName());
 }
 

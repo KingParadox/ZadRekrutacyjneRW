@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/BoxComponent.h"
 #include "InteractInterface.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "GameFramework/Character.h"
 #include "MyCharacter.generated.h"
 
@@ -25,6 +27,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 		UCameraComponent* CameraComponent;
 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		bool bAiming = false;
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -37,6 +43,8 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void Tick(float DeltaSeconds) override;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	AActor* EquippedBall;
 
 
 
@@ -45,6 +53,10 @@ private:
 		UBoxComponent* InteractionBox;
 
 	IInteractInterface* Interface;
+	AController* PlayerController;
+
 
 	void OnInteract();
+	void InitBallThrow();
+	void TryBallThrow();
 };

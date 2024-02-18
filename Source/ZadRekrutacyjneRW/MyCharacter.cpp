@@ -5,6 +5,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
+#include "BallBase.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -30,6 +31,9 @@ AMyCharacter::AMyCharacter()
 
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Box"));
 	InteractionBox->SetupAttachment(RootComponent);
+
+	EquippedBall = nullptr;
+	PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
 }
 
@@ -72,6 +76,8 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AMyCharacter::OnInteract);
+	PlayerInputComponent->BindAction("ThrowBall", IE_Pressed, this, &AMyCharacter::InitBallThrow);
+	PlayerInputComponent->BindAction("ThrowBall", IE_Released, this, &AMyCharacter::TryBallThrow);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMyCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMyCharacter::MoveRight);
@@ -85,6 +91,16 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AMyCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (bAiming == true)
+	{
+		bUseControllerRotationYaw = true;
+
+	}
+	else
+	{
+		bUseControllerRotationYaw = false;
+	}
 
 	TArray<AActor*>OverlappingActors;
 
@@ -121,6 +137,9 @@ void AMyCharacter::Tick(float DeltaSeconds)
 		Interface->ShowInteractionWidget();
 	}
 
+
+	
+
 }
 
 /////////////////////////////////////// On Interact
@@ -129,5 +148,30 @@ void AMyCharacter::OnInteract()
 	if (Interface)
 	{
 		Interface->Interact();
+	}
+}
+
+void AMyCharacter::InitBallThrow()
+{
+	if (EquippedBall != nullptr)
+	{
+		CameraComponent->bUsePawnControlRotation = true;
+		bAiming = true;
+	}
+
+}
+
+void AMyCharacter::TryBallThrow()
+{
+	CameraComponent->bUsePawnControlRotation = false;
+	bAiming = false;
+	if (EquippedBall !=nullptr)
+	{
+		ABallBase* BallBase = Cast<ABallBase>(EquippedBall);
+		if (BallBase != nullptr)
+		{
+			BallBase->ThrowBall();
+			EquippedBall = nullptr;
+		}
 	}
 }

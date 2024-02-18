@@ -5,6 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "InteractInterface.h"
+#include "Kismet/GameplayStatics.h"
+#include "MyPlayerController.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "MyCharacter.h"
+#include "Camera/CameraComponent.h"
 #include "Components/WidgetComponent.h"
 #include "BallBase.generated.h"
 
@@ -26,6 +31,11 @@ public:
 	virtual void Interact() override;
 	virtual void ShowInteractionWidget() override;
 	virtual void HideInteractionWidget() override;
+	void ThrowBall();
+
+	UPROPERTY(EditAnywhere)
+	class UProjectileMovementComponent* ProjectileComponent;
+
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -34,5 +44,10 @@ private:
 		UWidgetComponent* InteractionWidget;
 	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* BallMesh;
+
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	AMyCharacter* BPPlayerCharacter = Cast<AMyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+
+	void AttachBallToPlayer();
 
 };
